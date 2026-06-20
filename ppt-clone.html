@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUREX - Presentation Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f0f0f0;color:#333;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+#app{display:flex;flex-direction:column;flex:1;min-height:0}
+
+/* ─── HEADER ─── */
+#header{height:56px;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 10px;flex-shrink:0;gap:0}
+.hdr-section{display:flex;align-items:center;height:100%}
+.hdr-left{gap:6px;padding-right:12px;min-width:140px}
+.hdr-center{flex:1;justify-content:center;gap:2px}
+.hdr-right{gap:2px;padding-left:8px}
+
+#logo{font-size:20px;font-weight:700;color:#222;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+#logo svg{width:26px;height:26px}
+
+.hdr-btn{height:36px;padding:0 12px;border:none;background:transparent;color:#555;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;transition:all .12s;white-space:nowrap}
+.hdr-btn:hover{background:#e8e8e8;color:#222}
+.hdr-btn.active{background:#0078d4;color:#fff}
+.hdr-btn.active:hover{background:#1a8ae8;color:#fff}
+.hdr-btn svg{width:17px;height:17px;fill:currentColor;flex-shrink:0}
+.hdr-btn.icon-btn{padding:0 8px;min-width:36px;justify-content:center}
+.hdr-sep{width:1px;height:28px;background:#ddd;margin:0 6px;flex-shrink:0}
+
+/* Preview Dropdown */
+.preview-wrap{position:relative}
+.preview-btn{height:36px;padding:0 14px;border:none;background:#0e6b0e;color:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.preview-btn:hover{background:#158015}
+.preview-btn .arrow{padding:0 0 0 7px;border-left:1px solid rgba(255,255,255,.3);margin-left:5px;font-size:11px}
+.preview-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:5px;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;min-width:210px;overflow:hidden}
+.preview-dropdown.show{display:block}
+.preview-dropdown button{display:block;width:100%;padding:10px 16px;border:none;background:transparent;color:#333;cursor:pointer;font-size:13px;text-align:left;transition:background .1s}
+.preview-dropdown button:hover{background:#f0f0f0;color:#111}
+.preview-dropdown button svg{display:inline-block;vertical-align:middle;margin-right:10px;width:16px;height:16px;fill:currentColor}
+.preview-dropdown .desc{font-size:11px;color:#888;margin-left:26px;margin-top:2px}
+
+/* Shape Picker Popup */
+.shape-picker{display:none;position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;padding:8px;width:280px}
+.shape-picker.show{display:block}
+.shape-picker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.shape-picker-item{width:48px;height:48px;border:1px solid transparent;border-radius:6px;background:#f5f5f5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#555;transition:all .12s}
+.shape-picker-item:hover{border-color:#0078d4;background:#e3f2fd;color:#0078d4}
+
+/* ─── BODY ─── */
+#body{display:flex;flex:1;min-height:0}
+
+/* ─── LEFT PANEL ─── */
+#scenePanel{width:200px;background:#fafafa;border-right:1px solid #ddd;display:flex;flex-direction:column;flex-shrink:0}
+#scenePanel .panel-title{padding:10px 12px 6px;font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px}
+#addSceneBtn{margin:6px 10px;padding:8px;border:1px dashed #ccc;background:transparent;color:#888;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .12s}
+#addSceneBtn:hover{border-color:#0078d4;color:#0078d4;background:rgba(0,120,212,.06)}
+#sceneList{flex:1;overflow-y:auto;padding:2px 8px}
+#sceneList::-webkit-scrollbar{width:4px}
+#sceneList::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+.scene-item{display:flex;align-items:center;padding:8px 6px;border-radius:5px;cursor:pointer;transition:background .12s;margin-bottom:2px;gap:8px;border:1px solid transparent}
+.scene-item:hover{background:#eee}
+.scene-item.active{background:#e3f2fd;border-color:#0078d4}
+.scene-item .idx{font-size:11px;font-weight:700;color:#999;width:20px;text-align:center;flex-shrink:0}
+.scene-item .info{flex:1;min-width:0}
+.scene-item .name{font-size:13px;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene-item .name-input{font-size:13px;color:#333;background:#fff;border:1px solid #0078d4;border-radius:3px;padding:1px 4px;width:100%;outline:none}
+.scene-item .duration{font-size:10px;color:#999;white-space:nowrap}
+.scene-item .del-scene{width:18px;height:18px;border:none;background:transparent;color:#bbb;border-radius:3px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:all .12s}
+.scene-item:hover .del-scene{opacity:1}
+.scene-item .del-scene:hover{color:#e33;background:rgba(255,50,50,.1)}
+
+/* ─── PROPERTIES PANEL (right side) ─── */
+#propsPanel{width:0;background:#fafafa;border-left:1px solid #ddd;overflow:hidden;transition:width .2s ease;flex-shrink:0}
+#propsPanel.open{width:240px;min-width:240px}
+#propsInner{width:240px;padding:14px;overflow-y:auto;height:100%;display:flex;flex-direction:column;gap:2px}
+#propsInner h3{font-size:13px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+#propsInner h3 button{background:none;border:none;color:#999;cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px}
+#propsInner h3 button:hover{color:#333;background:#e8e8e8}
+#propsInner h4{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;margin-bottom:4px;font-weight:600}
+#propsInner .prop-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+#propsInner .prop-row label{font-size:12px;color:#666;flex-shrink:0;min-width:50px}
+#propsInner .prop-row input[type="color"]{width:30px;height:26px;border:none;padding:0;background:transparent;cursor:pointer;border-radius:3px}
+#propsInner .prop-row input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+#propsInner .prop-row input[type="color"]::-webkit-color-swatch{border:1px solid #ccc;border-radius:2px}
+#propsInner .prop-row input[type="range"]{flex:1;max-width:90px;height:4px;accent-color:#0078d4}
+#propsInner .prop-row select{background:#fff;color:#333;border:1px solid #ccc;border-radius:4px;padding:2px 6px;font-size:12px;outline:none;flex:1;max-width:120px}
+#propsInner .prop-row select:focus{border-color:#0078d4}
+#propsInner .prop-row input[type="text"]{background:#fff;color:#333;border:1px solid #ccc;border-radius:4px;padding:2px 5px;font-size:12px;outline:none;width:60px;text-align:center}
+#propsInner .prop-row input[type="text"]:focus{border-color:#0078d4}
+#propsInner .prop-row .val{font-size:11px;color:#888;min-width:24px;text-align:right}
+#propsInner .prop-group{border-top:1px solid #e5e5e5;margin-top:4px;padding-top:4px}
+
+/* ─── CANVAS ─── */
+#canvasWrap{flex:1;display:flex;align-items:center;justify-content:center;background:#e6e6e6;padding:16px;overflow:hidden;min-width:0}
+#canvasWrap .canvas-container{box-shadow:0 2px 16px rgba(0,0,0,.15);border-radius:2px}
+#canvasWrap .canvas-container canvas{display:block}
+
+/* ─── PRESENTATION ─── */
+#presentationOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;cursor:pointer;overflow:hidden;align-items:center;justify-content:center}
+#presentationOverlay.active{display:flex}
+.pres-obj{position:absolute;opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pres-obj.visible{opacity:1}
+.pres-text{font-family:inherit;white-space:pre-wrap;word-break:break-word;line-height:1.3}
+.pres-poly svg{width:100%;height:100%;display:block}
+#presCounter{position:absolute;bottom:20px;right:30px;color:rgba(255,255,255,.5);font-size:14px;pointer-events:none;font-family:'Segoe UI',sans-serif}
+#presSlideNum{position:absolute;bottom:20px;left:30px;color:rgba(255,255,255,.3);font-size:13px;pointer-events:none;font-family:'Segoe UI',sans-serif}
+#presProgress{position:absolute;top:0;left:0;height:3px;background:#0078d4;transition:width .3s;pointer-events:none}
+
+.pres-obj.anim-fadeIn{animation:fadeIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInLeft{animation:slideInLeft var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInRight{animation:slideInRight var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInTop{animation:slideInTop var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInBottom{animation:slideInBottom var(--anim-dur,.5s) ease both}
+.pres-obj.anim-zoomIn{animation:zoomIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-bounce{animation:bounce var(--anim-dur,.6s) ease both}
+.pres-obj.anim-rotate{animation:rotateIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-flip{animation:flipIn var(--anim-dur,.6s) ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInLeft{from{transform:translateX(-120px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInRight{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInTop{from{transform:translateY(-120px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideInBottom{from{transform:translateY(120px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes zoomIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.08)}70%{transform:scale(.92)}100%{transform:scale(1);opacity:1}}
+@keyframes rotateIn{from{transform:rotate(-200deg);opacity:0}to{transform:rotate(0);opacity:1}}
+@keyframes flipIn{from{transform:perspective(500px) rotateX(-80deg);opacity:0}to{transform:perspective(500px) rotateX(0);opacity:1}}
+
+/* ─── FILE INPUT (hidden) ─── */
+#imageInput{display:none}
+
+@media(max-width:900px){#scenePanel{width:140px}#propsPanel.open{width:200px;min-width:200px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div class="hdr-section hdr-left">
+      <div id="logo">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" fill="#0078d4"/><rect x="14" y="3" width="7" height="7" rx="1" fill="#0078d4" opacity=".6"/><rect x="3" y="14" width="7" height="7" rx="1" fill="#0078d4" opacity=".4"/><rect x="14" y="14" width="7" height="7" rx="1" fill="#0078d4" opacity=".2"/></svg>
+        AUREX
+      </div>
+    </div>
+    <div class="hdr-section hdr-center">
+      <button class="hdr-btn" id="modeText" data-mode="text">
+        <svg viewBox="0 0 16 16"><path d="M4.5 13.5l1.5-4m4 4l-1.5-4m-3.5 0l2-5.5 2 5.5m-4 0h4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Text
+      </button>
+      <button class="hdr-btn" id="modeShape" data-mode="shape">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3.5" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="4" y="9" width="8" height="5" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        Shape
+      </button>
+      <button class="hdr-btn" id="modeImage">
+        <svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="5.5" cy="5.5" r="1" fill="currentColor"/><path d="M2 11l3-3 2 2 3-3 4 4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Image
+      </button>
+      <div class="hdr-sep"></div>
+      <button class="hdr-btn" id="selectToolBtn">
+        <svg viewBox="0 0 16 16"><path d="M3 2l10 4-4 1.5L7 12l-2-5z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="hdr-section hdr-right">
+      <button class="hdr-btn icon-btn" id="undoBtn" title="Undo">
+        <svg viewBox="0 0 16 16"><path d="M4 7l-3 3 3 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4v3a3 3 0 01-3 3H2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <button class="hdr-btn icon-btn" id="redoBtn" title="Redo">
+        <svg viewBox="0 0 16 16"><path d="M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 4v3a3 3 0 003 3h7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="hdr-sep"></div>
+      <div class="preview-wrap">
+        <button class="preview-btn" id="previewBtn">
+          <svg viewBox="0 0 16 16" width="16" height="16"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+          Preview
+          <span class="arrow">▾</span>
+        </button>
+        <div class="preview-dropdown" id="previewDropdown">
+          <button id="previewFromCurrent">
+            <svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+            Play from Current Scene
+            <div class="desc">Start presentation from current slide</div>
+          </button>
+          <button id="previewFromStart">
+            <svg viewBox="0 0 16 16"><path d="M3 2.5v11l10-5.5z" fill="currentColor"/></svg>
+            Start from Beginning
+            <div class="desc">Start presentation from slide 1</div>
+          </button>
+        </div>
+      </div>
+      <button class="hdr-btn" id="exportBtn">
+        <svg viewBox="0 0 16 16"><path d="M8 2v8m0 0l-3-3m3 3l3-3M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export
+      </button>
+      <button class="hdr-btn icon-btn" id="lineTypeBtn" title="Line type">
+        <svg viewBox="0 0 16 16"><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"/></svg>
+      </button>
+      <button class="hdr-btn icon-btn" id="settingsBtn" title="Settings">
+        <svg viewBox="0 0 16 16"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M8 1.5v1m0 11v1M2.5 8h1m9 0h1M3.8 3.8l.7.7m7 .7l.7.7M3.8 12.2l.7-.7m7-.7l.7-.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SHAPE PICKER POPUP -->
+  <div class="shape-picker" id="shapePicker">
+    <div class="shape-picker-grid">
+      <div class="shape-picker-item" data-shape="rect" title="Rectangle">▬</div>
+      <div class="shape-picker-item" data-shape="circle" title="Circle">●</div>
+      <div class="shape-picker-item" data-shape="ellipse" title="Ellipse">⬮</div>
+      <div class="shape-picker-item" data-shape="triangle" title="Triangle">△</div>
+      <div class="shape-picker-item" data-shape="line" title="Line">╱</div>
+      <div class="shape-picker-item" data-shape="pentagon" title="Pentagon">⬠</div>
+      <div class="shape-picker-item" data-shape="hexagon" title="Hexagon">⬡</div>
+      <div class="shape-picker-item" data-shape="star" title="Star">★</div>
+      <div class="shape-picker-item" data-shape="arrow" title="Arrow">→</div>
+      <div class="shape-picker-item" data-shape="diamond" title="Diamond">◇</div>
+    </div>
+  </div>
+
+  <div id="body">
+    <div id="scenePanel">
+      <div class="panel-title">Scenes</div>
+      <button id="addSceneBtn">
+        <svg viewBox="0 0 14 14" width="14" height="14"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Add Scene
+      </button>
+      <div id="sceneList"></div>
+    </div>
+
+    <div id="canvasWrap">
+      <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <div id="propsPanel">
+      <div id="propsInner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Presentation Overlay -->
+<div id="presentationOverlay">
+  <div id="presProgress"></div>
+  <div id="presentationObjects"></div>
+  <span id="presSlideNum"></span>
+  <span id="presCounter"></span>
+</div>
+
+<input type="file" id="imageInput" accept="image/*">
+
+<script>
+// ============ STATE ============
+const state = {
+  slides: [],
+  currentIndex: 0,
+  mode: 'select',
+  shapeType: 'rect',
+  showProps: false,
+  propsTarget: null,
+  lineDash: false,
+  history: [],
+  historyIndex: -1,
+  presObjectIndex: 0,
+  presAnimatedObjects: [],
+  presSlideIndex: 0,
+};
+const CANVAS_W = 960, CANVAS_H = 540;
+
+// ============ CANVAS ============
+const canvas = new fabric.Canvas('mainCanvas', {
+  width: CANVAS_W, height: CANVAS_H,
+  backgroundColor: '#ffffff',
+  preserveObjectStacking: true,
+  selection: true,
+});
+
+// ============ HISTORY ============
+function pushHistory() {
+  if (state.historyIndex < state.history.length - 1)
+    state.history = state.history.slice(0, state.historyIndex + 1);
+  state.history.push(JSON.stringify(state.slides));
+  if (state.history.length > 50) state.history.shift();
+  else state.historyIndex++;
+}
+
+function undo() {
+  if (state.historyIndex <= 0) return;
+  state.historyIndex--;
+  state.slides = JSON.parse(state.history[state.historyIndex]);
+  loadSlide(); renderScenes(); updateUI();
+}
+
+function redo() {
+  if (state.historyIndex >= state.history.length - 1) return;
+  state.historyIndex++;
+  state.slides = JSON.parse(state.history[state.historyIndex]);
+  loadSlide(); renderScenes(); updateUI();
+}
+
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('redoBtn').addEventListener('click', redo);
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.key==='z'&&e.shiftKey))) { e.preventDefault(); redo(); }
+});
+
+// ============ SHAPES ============
+function getShapePoints(type, w, h) {
+  const cx=0,cy=0;
+  switch(type) {
+    case 'triangle': return [{x:cx,y:-h/2},{x:-w/2,y:h/2},{x:w/2,y:h/2}];
+    case 'pentagon': {const p=[];for(let i=0;i<5;i++){const a=Math.PI/2*3+i*2*Math.PI/5;p.push({x:cx+w/2*Math.cos(a),y:cy+h/2*Math.sin(a)})}return p;}
+    case 'hexagon': {const p=[];for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;p.push({x:cx+w/2*Math.cos(a),y:cy+h/2*Math.sin(a)})}return p;}
+    case 'star': {const p=[],o=h/2,i=h/4;for(let j=0;j<10;j++){const a=Math.PI/2*3+j*Math.PI/5,r=j%2===0?o:i;p.push({x:cx+w/2*Math.cos(a)*(r/h*2),y:cy+r*Math.sin(a)})}return p;}
+    case 'arrow': return [{x:-w/2,y:-h/4},{x:0,y:-h/4},{x:0,y:-h/2},{x:w/2,y:0},{x:0,y:h/2},{x:0,y:h/4},{x:-w/2,y:h/4}];
+    case 'diamond': return [{x:0,y:-h/2},{x:w/2,y:0},{x:0,y:h/2},{x:-w/2,y:0}];
+    default: return [];
+  }
+}
+
+function createShape(type) {
+  const w=120,h=120;
+  const opts={left:CANVAS_W/2-w/2,top:CANVAS_H/2-h/2,fill:'#4a90d9',stroke:'#333',strokeWidth:2,customAnimation:'',animDuration:500,animDelay:0};
+  let obj;
+  switch(type) {
+    case 'rect': obj=new fabric.Rect({...opts,width:w,height:h});break;
+    case 'circle': obj=new fabric.Circle({...opts,radius:w/2});break;
+    case 'ellipse': obj=new fabric.Ellipse({...opts,rx:w/2,ry:h/3});break;
+    case 'triangle': case 'pentagon': case 'hexagon': case 'star': case 'arrow': case 'diamond':
+      obj=new fabric.Polygon(getShapePoints(type,w,h),{...opts,width:w,height:h});break;
+    case 'line':
+      obj=new fabric.Line([0,0,120,0],{left:CANVAS_W/2-60,top:CANVAS_H/2,stroke:'#333',strokeWidth:3,fill:'',customAnimation:'',animDuration:500,animDelay:0});break;
+  }
+  if(obj){obj.on('modified',onObjModified);obj.setControlVisible('mtr',true)}
+  return obj;
+}
+
+// ============ SLIDES ============
+function saveSlide() {
+  if(!state.slides.length) return;
+  state.slides[state.currentIndex]=canvas.toJSON(['customAnimation','animDuration','animDelay']);
+  updateSceneDuration(state.currentIndex);
+}
+
+function onObjModified() { saveSlide(); }
+
+function addScene() {
+  canvas.discardActiveObject().renderAll();
+  const idx=state.slides.length;
+  state.slides.push({version:fabric.version,objects:[],name:`Scene ${idx+1}`,duration:0});
+  state.currentIndex=idx;
+  loadSlide(); renderScenes(); updateUI();
+  pushHistory();
+}
+
+function deleteScene(i) {
+  if(state.slides.length<=1) return;
+  canvas.discardActiveObject().renderAll();
+  state.slides.splice(i,1);
+  if(state.currentIndex>=state.slides.length) state.currentIndex=state.slides.length-1;
+  loadSlide(); renderScenes(); updateUI(); pushHistory();
+}
+
+function switchScene(i) {
+  if(i===state.currentIndex) return;
+  saveSlide();
+  closeProps();
+  state.currentIndex=i;
+  loadSlide(); renderScenes(); updateUI();
+}
+
+function loadSlide() {
+  canvas.clear().renderAll();
+  canvas.backgroundColor='#ffffff';
+  if(state.slides[state.currentIndex]){
+    canvas.loadFromJSON(state.slides[state.currentIndex],()=>{
+      canvas.getObjects().forEach(obj=>{obj.on('modified',onObjModified)});
+      canvas.renderAll();
+      if(canvas.getObjects().length) canvas.discardActiveObject().renderAll();
+    });
+  }
+}
+
+// ============ SCENE DURATION ============
+function computeSlideDuration(slide) {
+  if(!slide||!slide.objects) return 0;
+  let total=0;
+  slide.objects.forEach(o=>{if(o.customAnimation) total+=(o.animDuration||500)+(o.animDelay||0)});
+  return total;
+}
+
+function updateSceneDuration(idx) {
+  const d=computeSlideDuration(state.slides[idx]);
+  state.slides[idx].duration=d;
+}
+
+function formatDuration(ms) {
+  if(!ms) return '0s';
+  const s=Math.round(ms/1000);
+  if(s>=60){const m=Math.floor(s/60);return `${m}m ${s%60}s`}
+  return `${s}s`;
+}
+
+// ============ RENDER SCENES ============
+function renderScenes() {
+  const list=document.getElementById('sceneList');
+  list.innerHTML='';
+  state.slides.forEach((slide,i)=>{
+    const item=document.createElement('div');
+    item.className='scene-item'+(i===state.currentIndex?' active':'');
+    item.dataset.index=i;
+
+    const idx=document.createElement('span');
+    idx.className='idx';idx.textContent=i+1;
+    item.appendChild(idx);
+
+    const info=document.createElement('div');
+    info.className='info';
+    const name=document.createElement('div');
+    name.className='name';
+    if(slide.name) name.textContent=slide.name;
+    else name.textContent=`Scene ${i+1}`;
+    name.ondblclick=()=>{
+      const inp=document.createElement('input');
+      inp.className='name-input';
+      inp.value=name.textContent;
+      name.textContent='';
+      name.appendChild(inp);
+      inp.focus();
+      inp.onblur=()=>{
+        slide.name=inp.value||`Scene ${i+1}`;
+        renderScenes();
+      };
+      inp.onkeydown=e=>{if(e.key==='Enter')inp.blur()};
+    };
+    info.appendChild(name);
+
+    const dur=document.createElement('div');
+    dur.className='duration';
+    updateSceneDuration(i);
+    dur.textContent=formatDuration(slide.duration);
+    info.appendChild(dur);
+    item.appendChild(info);
+
+    const del=document.createElement('button');
+    del.className='del-scene';
+    del.innerHTML='<svg viewBox="0 0 12 12" width="12" height="12"><line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>';
+    del.title='Delete scene';
+    del.onclick=e=>{e.stopPropagation();deleteScene(i)};
+    item.appendChild(del);
+
+    item.onclick=()=>switchScene(i);
+    list.appendChild(item);
+  });
+}
+
+// ============ PROPERTIES PANEL ============
+function showProps(obj) {
+  state.showProps=true;
+  state.propsTarget=obj;
+  const panel=document.getElementById('propsPanel');
+  const inner=document.getElementById('propsInner');
+  panel.classList.add('open');
+  inner.innerHTML='';
+
+  // Header
+  const hdr=document.createElement('h3');
+  hdr.textContent='Properties';
+  const closeBtn=document.createElement('button');
+  closeBtn.innerHTML='<svg viewBox="0 0 14 14" width="14" height="14"><line x1="3" y1="3" x2="11" y2="11" stroke="currentColor" stroke-width="1.5"/><line x1="11" y1="3" x2="3" y2="11" stroke="currentColor" stroke-width="1.5"/></svg>';
+  closeBtn.title='Close';
+  closeBtn.onclick=closeProps;
+  hdr.appendChild(closeBtn);
+  inner.appendChild(hdr);
+
+  const isText=obj.type==='i-text'||obj.type==='textbox';
+
+  if(isText) {
+    // Font
+    addPropSection(inner,'Text Settings');
+    addPropRow(inner,'Font',()=>{
+      const s=document.createElement('select');
+      ['Arial','Times New Roman','Courier New','Georgia','Verdana'].forEach(f=>{
+        const o=document.createElement('option');o.value=f;o.textContent=f;
+        if(f===obj.fontFamily) o.selected=true;
+        s.appendChild(o);
+      });
+      s.onchange=()=>{obj.set('fontFamily',s.value);canvas.renderAll();saveSlide()};
+      return s;
+    });
+    addPropRow(inner,'Size',()=>{
+      const wrap=document.createElement('div');wrap.style.display='flex';wrap.style.alignItems='center';wrap.style.gap='6px';
+      const r=document.createElement('input');r.type='range';r.min=8;r.max=120;r.value=obj.fontSize||36;
+      r.style.flex='1';r.style.maxWidth='70px';
+      const v=document.createElement('span');v.className='val';v.textContent=obj.fontSize||36;
+      r.oninput=()=>{obj.set('fontSize',+r.value);v.textContent=r.value;canvas.renderAll();saveSlide()};
+      wrap.appendChild(r);wrap.appendChild(v);
+      return wrap;
+    });
+    // Color fill
+    addPropRow(inner,'Fill',()=>{
+      const c=document.createElement('input');c.type='color';
+      c.value=obj.fill||'#000000';
+      c.oninput=()=>{obj.set('fill',c.value);canvas.renderAll();saveSlide()};
+      return c;
+    });
+  } else {
+    addPropSection(inner,'Shape Settings');
+    addPropRow(inner,'Fill',()=>{
+      const c=document.createElement('input');c.type='color';
+      c.value=obj.fill||'#4a90d9';
+      c.oninput=()=>{obj.set('fill',c.value);canvas.renderAll();saveSlide()};
+      return c;
+    });
+  }
+
+  // Border
+  addPropSection(inner,'Border');
+  addPropRow(inner,'Color',()=>{
+    const c=document.createElement('input');c.type='color';
+    c.value=obj.stroke||'#333333';
+    c.oninput=()=>{obj.set('stroke',c.value);canvas.renderAll();saveSlide()};
+    return c;
+  });
+  addPropRow(inner,'Width',()=>{
+    const wrap=document.createElement('div');wrap.style.display='flex';wrap.style.alignItems='center';wrap.style.gap='6px';
+    const r=document.createElement('input');r.type='range';r.min=0;r.max=20;r.value=obj.strokeWidth||0;
+    r.style.flex='1';r.style.maxWidth='70px';
+    const v=document.createElement('span');v.className='val';v.textContent=obj.strokeWidth||0;
+    r.oninput=()=>{obj.set('strokeWidth',+r.value);v.textContent=r.value;canvas.renderAll();saveSlide()};
+    wrap.appendChild(r);wrap.appendChild(v);
+    return wrap;
+  });
+
+  // Animation
+  addPropSection(inner,'Animation');
+  addPropRow(inner,'Effect',()=>{
+    const s=document.createElement('select');
+    const anims=[['','None'],['fadeIn','Fade In'],['slideInLeft','Slide In Left'],['slideInRight','Slide In Right'],['slideInTop','Slide In Top'],['slideInBottom','Slide In Bottom'],['zoomIn','Zoom In'],['bounce','Bounce'],['rotate','Rotate'],['flip','Flip']];
+    anims.forEach(([v,l])=>{
+      const o=document.createElement('option');o.value=v;o.textContent=l;
+      if(v===obj.customAnimation) o.selected=true;
+      s.appendChild(o);
+    });
+    s.onchange=()=>{obj.set('customAnimation',s.value);saveSlide()};
+    return s;
+  });
+  addPropRow(inner,'Duration',()=>{
+    const wrap=document.createElement('div');wrap.style.display='flex';wrap.style.alignItems='center';wrap.style.gap='6px';
+    const r=document.createElement('input');r.type='range';r.min=100;r.max=5000;r.step=100;r.value=obj.animDuration||500;
+    r.style.flex='1';r.style.maxWidth='70px';
+    const v=document.createElement('span');v.className='val';v.textContent=(obj.animDuration||500)+'ms';
+    r.oninput=()=>{obj.set('animDuration',+r.value);v.textContent=r.value+'ms';saveSlide();updateSceneDuration(state.currentIndex);renderScenes()};
+    wrap.appendChild(r);wrap.appendChild(v);
+    return wrap;
+  });
+  addPropRow(inner,'Delay',()=>{
+    const wrap=document.createElement('div');wrap.style.display='flex';wrap.style.alignItems='center';wrap.style.gap='6px';
+    const r=document.createElement('input');r.type='range';r.min=0;r.max=3000;r.step=100;r.value=obj.animDelay||0;
+    r.style.flex='1';r.style.maxWidth='70px';
+    const v=document.createElement('span');v.className='val';v.textContent=(obj.animDelay||0)+'ms';
+    r.oninput=()=>{obj.set('animDelay',+r.value);v.textContent=r.value+'ms';saveSlide();updateSceneDuration(state.currentIndex);renderScenes()};
+    wrap.appendChild(r);wrap.appendChild(v);
+    return wrap;
+  });
+}
+
+function addPropSection(container,title){
+  const h=document.createElement('h4');h.textContent=title;container.appendChild(h);
+}
+function addPropRow(container,label,elFn){
+  const r=document.createElement('div');r.className='prop-row';
+  const l=document.createElement('label');l.textContent=label;
+  r.appendChild(l);r.appendChild(elFn());container.appendChild(r);
+}
+
+function closeProps() {
+  state.showProps=false;
+  state.propsTarget=null;
+  document.getElementById('propsPanel').classList.remove('open');
+}
+
+// ============ RIGHT CLICK → PROPS ============
+canvas.on('mouse:down', opt => {
+  if(!opt.e||opt.e.button!==2) return;
+  const evt=opt.e;
+  // right click on object
+  const targets=canvas.findTarget(evt);
+  if(targets) {
+    canvas.setActiveObject(targets);
+    canvas.renderAll();
+    showProps(targets);
+    evt.preventDefault();
+  }
+});
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ============ MODE SYSTEM ============
+const modeBtns=document.querySelectorAll('[data-mode]');
+
+function setMode(mode) {
+  // Clear shape picker
+  document.getElementById('shapePicker').classList.remove('show');
+
+  state.mode=mode;
+  modeBtns.forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  document.getElementById('selectToolBtn').classList.toggle('active',mode==='select');
+  canvas.isDrawingMode=false;
+  canvas.selection=mode==='select';
+  canvas.defaultCursor=mode==='text'?'text':'default';
+}
+
+modeBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(btn.dataset.mode==='shape') {
+      const picker=document.getElementById('shapePicker');
+      picker.classList.toggle('show');
+      setMode('shape');
+      if(picker.classList.contains('show')) {
+        const rect=btn.getBoundingClientRect();
+        picker.style.left=Math.max(8,Math.min(rect.left+rect.width/2-140,window.innerWidth-288))+'px';
+        picker.style.top=(rect.bottom+4)+'px';
+      }
+    } else {
+      setMode(btn.dataset.mode);
+    }
+  });
+});
+
+document.getElementById('selectToolBtn').addEventListener('click',()=>{
+  setMode('select');
+  document.getElementById('shapePicker').classList.remove('show');
+});
+
+// Shape picker items
+document.querySelectorAll('.shape-picker-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    const shape=item.dataset.shape;
+    const obj=createShape(shape);
+    if(obj){canvas.add(obj);canvas.setActiveObject(obj);saveSlide();updateUI();pushHistory()}
+    document.getElementById('shapePicker').classList.remove('show');
+  });
+});
+
+// Canvas interactions per mode
+canvas.on('mouse:down', opt => {
+  if(!opt.e||opt.e.button!==0) return; // left click only
+  // Text mode: click canvas to add text box
+  if(state.mode==='text') {
+    const p=opt.pointer;
+    const text=new fabric.IText('Type here',{
+      left:p.x,top:p.y,fontFamily:'Arial',fontSize:36,fill:'#333',stroke:'',strokeWidth:0,
+      customAnimation:'',animDuration:500,animDelay:0
+    });
+    text.on('modified',onObjModified);
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    setMode('select');
+    saveSlide();updateUI();pushHistory();
+    return;
+  }
+});
+
+// Image button → direct file picker (no mode change)
+document.getElementById('modeImage').onclick = function(e) {
+  e.stopPropagation();
+  document.getElementById('imageInput').click();
+  this.style.background='#e8e8e8';
+  setTimeout(()=>this.style.background='', 200);
+  return false;
+};
+
+document.getElementById('imageInput').addEventListener('change', function(e) {
+  if(!this.files||!this.files[0]) return;
+  const file=this.files[0];
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    fabric.Image.fromURL(ev.target.result, img => {
+      const w=img.width,h=img.height;
+      const s=Math.min(400/w,400/h,1);
+      img.set({
+        left:CANVAS_W/2-w*s/2,top:CANVAS_H/2-h*s/2,
+        scaleX:s,scaleY:s,
+        customAnimation:'',animDuration:500,animDelay:0
+      });
+      img.on('modified',onObjModified);
+      img.setControlVisible('mtr',true);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      saveSlide();updateUI();pushHistory();
+    });
+  };
+  reader.readAsDataURL(file);
+  this.value='';
+});
+
+// ============ LINE TYPE TOGGLE ============
+document.getElementById('lineTypeBtn').addEventListener('click',()=>{
+  state.lineDash=!state.lineDash;
+  const btn=document.getElementById('lineTypeBtn');
+  btn.style.opacity=state.lineDash?'1':'0.5';
+  // Apply to selected object
+  const active=canvas.getActiveObject();
+  if(active) {
+    active.set('strokeDashArray',state.lineDash?[5,5]:null);
+    canvas.renderAll();saveSlide();
+  }
+});
+
+// ============ EXPORT ============
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  saveSlide();
+  const dataURL=canvas.toDataURL({format:'png',multiplier:2});
+  const a=document.createElement('a');
+  a.href=dataURL;
+  a.download=`${state.slides[state.currentIndex].name||'Scene'}.png`;
+  a.click();
+});
+
+// ============ PREVIEW DROPDOWN ============
+document.getElementById('previewBtn').addEventListener('click',e=>{
+  const dd=document.getElementById('previewDropdown');
+  dd.classList.toggle('show');
+  e.stopPropagation();
+});
+
+document.addEventListener('click',()=>{
+  document.getElementById('previewDropdown').classList.remove('show');
+});
+
+document.getElementById('previewFromCurrent').addEventListener('click',()=>{
+  document.getElementById('previewDropdown').classList.remove('show');
+  saveSlide();
+  enterPresentation(state.currentIndex);
+});
+
+document.getElementById('previewFromStart').addEventListener('click',()=>{
+  document.getElementById('previewDropdown').classList.remove('show');
+  saveSlide();
+  enterPresentation(0);
+});
+
+// ============ PRESENTATION ============
+function enterPresentation(startIndex) {
+  const overlay=document.getElementById('presentationOverlay');
+  overlay.classList.add('active');
+  state.presSlideIndex=startIndex;
+  state.presObjectIndex=0;
+  renderPresSlide();
+}
+
+function exitPresentation() {
+  document.getElementById('presentationOverlay').classList.remove('active');
+  state.presObjectIndex=0;
+  state.presAnimatedObjects=[];
+}
+
+function renderPresSlide() {
+  const objContainer=document.getElementById('presentationObjects');
+  const slideNum=document.getElementById('presSlideNum');
+  const progress=document.getElementById('presProgress');
+  objContainer.innerHTML='';
+  state.presObjectIndex=0;
+  state.presAnimatedObjects=[];
+
+  const slide=state.slides[state.presSlideIndex];
+  if(!slide) return;
+
+  slideNum.textContent=`Slide ${state.presSlideIndex+1} of ${state.slides.length}`;
+  progress.style.width='0%';
+
+  const winW=window.innerWidth,winH=window.innerHeight;
+  const scale=Math.min(winW/CANVAS_W,winH/CANVAS_H);
+  const offX=(winW-CANVAS_W*scale)/2,offY=(winH-CANVAS_H*scale)/2;
+
+  const allAnimated=[];
+
+  slide.objects.forEach((objData,idx)=>{
+    const anim=objData.customAnimation||'';
+    const el=document.createElement('div');
+    el.className='pres-obj';
+    el.dataset.index=idx;
+
+    const left=(objData.left||0)*scale+offX;
+    const top=(objData.top||0)*scale+offY;
+
+    if(objData.type==='i-text'||objData.type==='textbox') {
+      el.className+=' pres-text';
+      el.textContent=objData.text||'';
+      el.style.left=left+'px';el.style.top=top+'px';
+      el.style.fontFamily=objData.fontFamily||'Arial';
+      el.style.fontSize=(objData.fontSize||36)*scale+'px';
+      el.style.color=objData.fill||'#000';
+      el.style.fontWeight=objData.fontWeight||'normal';
+      el.style.fontStyle=objData.fontStyle||'normal';
+      el.style.textDecoration=objData.textDecoration||'';
+      el.style.textAlign=objData.textAlign||'left';
+      el.style.width=(objData.width||200)*scale+'px';
+      el.style.height=(objData.height||50)*scale+'px';
+      if(objData.backgroundColor) el.style.background=objData.backgroundColor;
+    } else {
+      const w=(objData.width||100)*scale,h=(objData.height||100)*scale;
+      el.style.left=left+'px';el.style.top=top+'px';
+      el.style.width=w+'px';el.style.height=h+'px';
+      const fill=objData.fill||'transparent',stroke=objData.stroke||'transparent';
+      const sw=(objData.strokeWidth||0)*scale;
+
+      if(objData.type==='circle'){
+        el.style.borderRadius='50%';el.style.background=fill;
+        if(sw>0) el.style.border=`${sw}px solid ${stroke}`;
+      } else if(objData.type==='ellipse'){
+        el.style.borderRadius='50%';el.style.background=fill;
+        if(sw>0) el.style.border=`${sw}px solid ${stroke}`;
+        el.style.width=((objData.rx||60)*2*scale)+'px';el.style.height=((objData.ry||40)*2*scale)+'px';
+      } else if(objData.type==='rect'){
+        el.style.background=fill;
+        if(sw>0) el.style.border=`${sw}px solid ${stroke}`;
+        if(objData.rx) el.style.borderRadius=objData.rx*scale+'px';
+        if(objData.ry) el.style.borderRadius=objData.ry*scale+'px';
+      } else if(objData.type==='line'){
+        el.style.height=Math.max((objData.strokeWidth||3)*scale,1)+'px';
+        el.style.background=objData.stroke||'#333';
+        el.style.width=Math.abs((objData.x2-objData.x1||120)*scale)+'px';
+      } else if(objData.type==='polygon'){
+        el.className+=' pres-poly';
+        const pts=objData.points||[{x:-60,y:0},{x:60,y:0},{x:0,y:60}];
+        let mnX=Infinity,mxX=-Infinity,mnY=Infinity,mxY=-Infinity;
+        pts.forEach(p=>{mnX=Math.min(mnX,p.x);mxX=Math.max(mxX,p.x);mnY=Math.min(mnY,p.y);mxY=Math.max(mxY,p.y)});
+        const pw=mxX-mnX||1,ph=mxY-mnY||1;
+        const svgPts=pts.map(p=>`${((p.x-mnX)/pw*100).toFixed(1)},${((p.y-mnY)/ph*100).toFixed(1)}`).join(' ');
+        el.style.width=w+'px';el.style.height=h+'px';
+        el.innerHTML=`<svg viewBox="0 0 100 100"><polygon points="${svgPts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw>0?Math.max(sw/scale,.5):.5}"/></svg>`;
+        el.style.background='none';el.style.border='none';
+      }
+    }
+    if(objData.angle) el.style.transform=`rotate(${objData.angle}deg)`;
+    if(anim){
+      el.dataset.anim=anim;
+      el.dataset.duration=objData.animDuration||500;
+      el.dataset.delay=objData.animDelay||0;
+      allAnimated.push(el);
+    } else el.classList.add('visible');
+    objContainer.appendChild(el);
+  });
+
+  state.presAnimatedObjects=allAnimated;
+  updatePresCounter();
+  showNextPresObj();
+}
+
+function showNextPresObj() {
+  const progress=document.getElementById('presProgress');
+  const totalAnimated=state.presAnimatedObjects.length;
+
+  if(state.presObjectIndex>=totalAnimated){
+    if(state.presSlideIndex<state.slides.length-1){
+      state.presSlideIndex++;state.presObjectIndex=0;renderPresSlide();
+    } else exitPresentation();
+    return;
+  }
+  const el=state.presAnimatedObjects[state.presObjectIndex];
+  if(el){
+    const anim=el.dataset.anim;
+    const dur=el.dataset.duration||500;
+    const delay=el.dataset.delay||0;
+    el.style.setProperty('--anim-dur',dur/1000+'s');
+    el.style.animationDelay=(delay/1000)+'s';
+    // Use RAF to ensure delay works properly
+    requestAnimationFrame(()=>{
+      el.classList.add('visible','anim-'+anim);
+    });
+    state.presObjectIndex++;
+    const pct=totalAnimated?Math.min(state.presObjectIndex/totalAnimated*100,100):100;
+    progress.style.width=pct+'%';
+    updatePresCounter();
+  }
+}
+
+function updatePresCounter() {
+  const total=state.presAnimatedObjects.length;
+  const remaining=total-state.presObjectIndex;
+  document.getElementById('presCounter').textContent=
+    remaining>0?`${remaining} more`:'Click for next slide';
+}
+
+document.getElementById('presentationOverlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) showNextPresObj();
+});
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('presentationOverlay').classList.contains('active')) return;
+  if(['ArrowRight','ArrowDown',' ','Enter'].includes(e.key)){e.preventDefault();showNextPresObj()}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){
+    e.preventDefault();
+    if(state.presObjectIndex>0){
+      state.presObjectIndex--;
+      const el=state.presAnimatedObjects[state.presObjectIndex];
+      if(el){el.classList.remove('visible');const a=el.dataset.anim;if(a)el.classList.remove('anim-'+a);void el.offsetWidth;}
+    } else if(state.presSlideIndex>0){state.presSlideIndex--;state.presObjectIndex=0;renderPresSlide();}
+    updatePresCounter();
+  }
+  if(e.key==='Escape') exitPresentation();
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){if(!document.getElementById('presentationOverlay').classList.contains('active')){e.preventDefault();undo()}}
+});
+
+// ============ SELECTION / UI ============
+function updateUI() {
+  const active=canvas.getActiveObject();
+  if(state.showProps&&active) showProps(active);
+  const scenes=document.querySelectorAll('.scene-item');
+  scenes.forEach((s,i)=>s.classList.toggle('active',i===state.currentIndex));
+}
+
+canvas.on('selection:created',updateUI);
+canvas.on('selection:updated',updateUI);
+canvas.on('selection:cleared',()=>{});
+canvas.on('object:modified',saveSlide);
+
+// Delete key
+document.addEventListener('keydown', e => {
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(document.activeElement&&document.activeElement.tagName==='INPUT') return;
+    const active=canvas.getActiveObject();
+    if(active&&!document.getElementById('presentationOverlay').classList.contains('active')){
+      canvas.remove(active);
+      canvas.discardActiveObject().renderAll();
+      saveSlide();updateUI();pushHistory();
+    }
+  }
+});
+
+// ============ CLOSE SHAPE PICKER ============
+document.addEventListener('click', e => {
+  const picker=document.getElementById('shapePicker');
+  if(picker.classList.contains('show')) {
+    const shapeBtn=document.querySelector('[data-mode="shape"]');
+    if(!picker.contains(e.target)&&!shapeBtn.contains(e.target)) picker.classList.remove('show');
+  }
+});
+
+// ============ INIT ============
+function init() {
+  addScene();
+  setMode('select');
+}
+
+init();
+</script>
+</body>
+</html>
