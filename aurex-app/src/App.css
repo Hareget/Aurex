@@ -1,0 +1,114 @@
+#app{display:flex;flex-direction:column;flex:1;min-height:0}
+
+/* ─── HEADER ─── */
+#header{height:56px;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:0 10px;flex-shrink:0;gap:0}
+.hdr-section{display:flex;align-items:center;height:100%}
+.hdr-left{gap:6px;padding-right:12px;min-width:140px}
+.hdr-center{flex:1;justify-content:center;gap:2px}
+.hdr-right{gap:2px;padding-left:8px}
+#logo{font-size:20px;font-weight:700;color:#222;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+#logo svg{width:26px;height:26px}
+.hdr-btn{height:36px;padding:0 12px;border:none;background:transparent;color:#555;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;transition:all .12s;white-space:nowrap}
+.hdr-btn:hover{background:#e8e8e8;color:#222}
+.hdr-btn.active{background:#0078d4;color:#fff}
+.hdr-btn.active:hover{background:#1a8ae8;color:#fff}
+.hdr-btn svg{width:17px;height:17px;fill:currentColor;flex-shrink:0}
+.hdr-btn.icon-btn{padding:0 8px;min-width:36px;justify-content:center}
+.hdr-sep{width:1px;height:28px;background:#ddd;margin:0 6px;flex-shrink:0}
+
+/* Preview Dropdown */
+.preview-wrap{position:relative}
+.preview-btn{height:36px;padding:0 14px;border:none;background:#0e6b0e;color:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.preview-btn:hover{background:#158015}
+.preview-btn .arrow{padding:0 0 0 7px;border-left:1px solid rgba(255,255,255,.3);margin-left:5px;font-size:11px}
+.preview-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:5px;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;min-width:210px;overflow:hidden}
+.preview-dropdown.show{display:block}
+.preview-dropdown button{display:block;width:100%;padding:10px 16px;border:none;background:transparent;color:#333;cursor:pointer;font-size:13px;text-align:left;transition:background .1s}
+.preview-dropdown button:hover{background:#f0f0f0;color:#111}
+.preview-dropdown button svg{display:inline-block;vertical-align:middle;margin-right:10px;width:16px;height:16px;fill:currentColor}
+.preview-dropdown .desc{font-size:11px;color:#888;margin-left:26px;margin-top:2px}
+
+/* Shape Picker Popup */
+.shape-picker{display:none;position:fixed;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;padding:8px;width:280px}
+.shape-picker.show{display:block}
+.shape-picker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.shape-picker-item{width:48px;height:48px;border:1px solid transparent;border-radius:6px;background:#f5f5f5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#555;transition:all .12s}
+.shape-picker-item:hover{border-color:#0078d4;background:#e3f2fd;color:#0078d4}
+
+/* ─── BODY ─── */
+#body{display:flex;flex:1;min-height:0}
+
+/* ─── LEFT PANEL ─── */
+#scenePanel{width:200px;background:#fafafa;border-right:1px solid #ddd;display:flex;flex-direction:column;flex-shrink:0}
+#scenePanel .panel-title{padding:10px 12px 6px;font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px}
+#addSceneBtn{margin:6px 10px;padding:8px;border:1px dashed #ccc;background:transparent;color:#888;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .12s}
+#addSceneBtn:hover{border-color:#0078d4;color:#0078d4;background:rgba(0,120,212,.06)}
+#sceneList{flex:1;overflow-y:auto;padding:2px 8px}
+#sceneList::-webkit-scrollbar{width:4px}
+#sceneList::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+.scene-item{display:flex;align-items:center;padding:8px 6px;border-radius:5px;cursor:pointer;transition:background .12s;margin-bottom:2px;gap:8px;border:1px solid transparent}
+.scene-item:hover{background:#eee}
+.scene-item.active{background:#e3f2fd;border-color:#0078d4}
+.scene-item .idx{font-size:11px;font-weight:700;color:#999;width:20px;text-align:center;flex-shrink:0}
+.scene-item .info{flex:1;min-width:0}
+.scene-item .name{font-size:13px;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene-item .name-input{font-size:13px;color:#333;background:#fff;border:1px solid #0078d4;border-radius:3px;padding:1px 4px;width:100%;outline:none}
+.scene-item .duration{font-size:10px;color:#999;white-space:nowrap}
+.scene-item .del-scene{width:18px;height:18px;border:none;background:transparent;color:#bbb;border-radius:3px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:all .12s}
+.scene-item:hover .del-scene{opacity:1}
+.scene-item .del-scene:hover{color:#e33;background:rgba(255,50,50,.1)}
+
+/* ─── PROPERTIES PANEL (right side) ─── */
+#propsPanel{width:0;background:#fafafa;border-left:1px solid #ddd;overflow:hidden;transition:width .2s ease;flex-shrink:0}
+#propsPanel.open{width:240px;min-width:240px}
+#propsInner{width:240px;padding:14px;overflow-y:auto;height:100%;display:flex;flex-direction:column;gap:2px}
+#propsInner h3{font-size:13px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+#propsInner h3 button{background:none;border:none;color:#999;cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px}
+#propsInner h3 button:hover{color:#333;background:#e8e8e8}
+#propsInner h4{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;margin-bottom:4px;font-weight:600}
+.prop-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.prop-row label{font-size:12px;color:#666;flex-shrink:0;min-width:50px}
+.prop-row input[type="color"]{width:30px;height:26px;border:none;padding:0;background:transparent;cursor:pointer;border-radius:3px}
+.prop-row input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+.prop-row input[type="color"]::-webkit-color-swatch{border:1px solid #ccc;border-radius:2px}
+.prop-row input[type="range"]{flex:1;max-width:90px;height:4px;accent-color:#0078d4}
+.prop-row select{background:#fff;color:#333;border:1px solid #ccc;border-radius:4px;padding:2px 6px;font-size:12px;outline:none;flex:1;max-width:120px}
+.prop-row select:focus{border-color:#0078d4}
+.prop-row .val{font-size:11px;color:#888;min-width:24px;text-align:right}
+
+/* ─── CANVAS ─── */
+#canvasWrap{flex:1;display:flex;align-items:center;justify-content:center;background:#e6e6e6;padding:16px;overflow:hidden;min-width:0}
+#canvasWrap .canvas-container{box-shadow:0 2px 16px rgba(0,0,0,.15);border-radius:2px}
+#canvasWrap .canvas-container canvas{display:block}
+
+/* ─── PRESENTATION ─── */
+#presentationOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;cursor:pointer;overflow:hidden;align-items:center;justify-content:center}
+#presentationOverlay.active{display:flex}
+.pres-obj{position:absolute;opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pres-obj.visible{opacity:1}
+.pres-text{font-family:inherit;white-space:pre-wrap;word-break:break-word;line-height:1.3}
+.pres-poly svg{width:100%;height:100%;display:block}
+#presCounter{position:absolute;bottom:20px;right:30px;color:rgba(255,255,255,.5);font-size:14px;pointer-events:none;font-family:'Segoe UI',sans-serif}
+#presSlideNum{position:absolute;bottom:20px;left:30px;color:rgba(255,255,255,.3);font-size:13px;pointer-events:none;font-family:'Segoe UI',sans-serif}
+#presProgress{position:absolute;top:0;left:0;height:3px;background:#0078d4;transition:width .3s;pointer-events:none}
+
+.pres-obj.anim-fadeIn{animation:fadeIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInLeft{animation:slideInLeft var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInRight{animation:slideInRight var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInTop{animation:slideInTop var(--anim-dur,.5s) ease both}
+.pres-obj.anim-slideInBottom{animation:slideInBottom var(--anim-dur,.5s) ease both}
+.pres-obj.anim-zoomIn{animation:zoomIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-bounce{animation:bounce var(--anim-dur,.6s) ease both}
+.pres-obj.anim-rotate{animation:rotateIn var(--anim-dur,.5s) ease both}
+.pres-obj.anim-flip{animation:flipIn var(--anim-dur,.6s) ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInLeft{from{transform:translateX(-120px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInRight{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInTop{from{transform:translateY(-120px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideInBottom{from{transform:translateY(120px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes zoomIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.08)}70%{transform:scale(.92)}100%{transform:scale(1);opacity:1}}
+@keyframes rotateIn{from{transform:rotate(-200deg);opacity:0}to{transform:rotate(0);opacity:1}}
+@keyframes flipIn{from{transform:perspective(500px) rotateX(-80deg);opacity:0}to{transform:perspective(500px) rotateX(0);opacity:1}}
+
+@media(max-width:900px){#scenePanel{width:140px}#propsPanel.open{width:200px;min-width:200px}}

@@ -300,6 +300,8 @@ document.getElementById('redoBtn').addEventListener('click', redo);
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey) { e.preventDefault(); undo(); }
   if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.key==='z'&&e.shiftKey))) { e.preventDefault(); redo(); }
+  if(e.key==='v'||e.key==='V') setMode('select');
+  if(e.key==='t'||e.key==='T') { setMode('text'); document.getElementById('shapePicker').classList.remove('show'); }
 });
 
 // ============ SHAPES ============
@@ -325,7 +327,7 @@ function createShape(type) {
     case 'circle': obj=new fabric.Circle({...opts,radius:w/2});break;
     case 'ellipse': obj=new fabric.Ellipse({...opts,rx:w/2,ry:h/3});break;
     case 'triangle': case 'pentagon': case 'hexagon': case 'star': case 'arrow': case 'diamond':
-      obj=new fabric.Polygon(getShapePoints(type,w,h),{...opts,width:w,height:h});break;
+      obj=new fabric.Polygon(getShapePoints(type,w,h),{...opts});break;
     case 'line':
       obj=new fabric.Line([0,0,120,0],{left:CANVAS_W/2-60,top:CANVAS_H/2,stroke:'#333',strokeWidth:3,fill:'',customAnimation:'',animDuration:500,animDelay:0});break;
   }
@@ -454,6 +456,7 @@ function renderScenes() {
 
 // ============ PROPERTIES PANEL ============
 function showProps(obj) {
+  try {
   state.showProps=true;
   state.propsTarget=obj;
   const panel=document.getElementById('propsPanel');
@@ -561,6 +564,7 @@ function showProps(obj) {
     wrap.appendChild(r);wrap.appendChild(v);
     return wrap;
   });
+  } catch(e) { console.error('showProps error:', e); }
 }
 
 function addPropSection(container,title){
@@ -580,16 +584,27 @@ function closeProps() {
 
 // ============ RIGHT CLICK → PROPS ============
 canvas.on('mouse:down', opt => {
-  if(!opt.e||opt.e.button!==2) return;
-  const evt=opt.e;
-  // right click on object
-  const targets=canvas.findTarget(evt);
-  if(targets) {
-    canvas.setActiveObject(targets);
-    canvas.renderAll();
-    showProps(targets);
-    evt.preventDefault();
-  }
+  try {
+    if(!opt.e) return;
+    const btn=opt.e.button!==undefined?opt.e.button:opt.e.which;
+    if(btn!==2&&btn!==3) return;
+    const evt=opt.e;
+    const ptr=canvas.getPointer(evt);
+    const objs=canvas.getObjects();
+    let target=null;
+    for(let i=objs.length-1;i>=0;i--){
+      if(objs[i].containsPoint(ptr)){
+        target=objs[i];break;
+      }
+    }
+    if(target) {
+      canvas.discardActiveObject();
+      canvas.setActiveObject(target);
+      canvas.renderAll();
+      showProps(target);
+      evt.preventDefault();
+    }
+  } catch(e) { console.error(e); }
 });
 
 document.addEventListener('contextmenu', e => e.preventDefault());
@@ -633,10 +648,16 @@ document.getElementById('selectToolBtn').addEventListener('click',()=>{
 
 // Shape picker items
 document.querySelectorAll('.shape-picker-item').forEach(item=>{
-  item.addEventListener('click',()=>{
+  item.addEventListener('click',(e)=>{
+    e.stopPropagation();
     const shape=item.dataset.shape;
     const obj=createShape(shape);
-    if(obj){canvas.add(obj);canvas.setActiveObject(obj);saveSlide();updateUI();pushHistory()}
+    if(obj){
+      canvas.add(obj);
+      canvas.setActiveObject(obj);
+      canvas.renderAll();
+      saveSlide();updateUI();pushHistory();
+    }
     document.getElementById('shapePicker').classList.remove('show');
   });
 });
@@ -654,6 +675,7 @@ canvas.on('mouse:down', opt => {
     text.on('modified',onObjModified);
     canvas.add(text);
     canvas.setActiveObject(text);
+    canvas.renderAll();
     setMode('select');
     saveSlide();updateUI();pushHistory();
     return;
@@ -686,6 +708,7 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
       img.setControlVisible('mtr',true);
       canvas.add(img);
       canvas.setActiveObject(img);
+      canvas.renderAll();
       saveSlide();updateUI();pushHistory();
     });
   };
@@ -938,6 +961,9 @@ document.addEventListener('click', e => {
 });
 
 // ============ INIT ============
+document.getElementById('addSceneBtn').addEventListener('click', addScene);
+document.getElementById('lineTypeBtn').style.opacity='0.5';
+
 function init() {
   addScene();
   setMode('select');
